@@ -1,0 +1,63 @@
+name: Build Azan Watch App
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+      
+    - name: Setup Flutter
+      uses: subosito/flutter-action@v2
+      with:
+        flutter-version: '3.19.5'
+        cache: true
+        
+    - name: Check Project Structure
+      run: |
+        echo "=== Azan Watch Project Structure ==="
+        ls -la
+        echo "=== lib Directory ==="
+        ls -la lib/
+        echo "=== Checking Main Dart File ==="
+        head -10 lib/main.dart
+        
+    - name: Install Dependencies
+      run: flutter pub get
+      
+    - name: Setup Web Platform
+      run: |
+        # اگر web ڈائریکٹری نہیں ہے تو بنائیں
+        if [ ! -d "web" ]; then
+          echo "Creating web platform..."
+          flutter create --platforms web --project-name azan_watch .
+        else
+          echo "Web platform already exists"
+        fi
+        
+    - name: Build Web App
+      run: flutter build web --release
+      
+    - name: Verify Build Output
+      run: |
+        echo "=== Build Verification ==="
+        echo "Build files:"
+        ls -la build/web/
+        echo "Main Dart JS size:"
+        ls -lh build/web/main.dart.js
+        echo "Total build size:"
+        du -sh build/web/
+        
+    - name: Upload Azan Watch Build
+      uses: actions/upload-artifact@v4
+      with:
+        name: azan-watch-app
+        path: build/web/
+        retention-days: 30
